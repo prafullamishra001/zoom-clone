@@ -64,16 +64,22 @@ export default function Home() {
   };
 
   const handleNewMeeting = async () => {
+    console.log('handleNewMeeting function called');
     try {
+      console.log('Calling API to create meeting...');
       const res = await fetch(`${API_BASE}/meetings/instant?host_id=${DEFAULT_USER_ID}`, {
         method: 'POST'
       });
+      console.log('API response status:', res.status);
       if (res.ok) {
         const meeting = await res.json();
+        console.log('Meeting created successfully:', meeting);
         setCurrentMeeting(meeting);
         setShowNewMeeting(false);
-        // Pass host info in URL to avoid double joining
+        console.log('Redirecting to meeting room...');
         window.location.href = `/meeting/${meeting.meeting_id}?host=true&name=Host`;
+      } else {
+        console.error('API returned error:', res.status);
       }
     } catch (error) {
       console.error('Error creating meeting:', error);
@@ -98,16 +104,22 @@ export default function Home() {
   };
 
   const handleScheduleMeeting = async (meetingData: any) => {
+    console.log('handleScheduleMeeting function called with data:', meetingData);
     try {
+      console.log('Calling API to schedule meeting...');
       const res = await fetch(`${API_BASE}/meetings/schedule?host_id=${DEFAULT_USER_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(meetingData)
       });
+      console.log('API response status:', res.status);
       if (res.ok) {
         const meeting = await res.json();
+        console.log('Meeting scheduled successfully:', meeting);
         setShowScheduleMeeting(false);
         fetchMeetings();
+      } else {
+        console.error('API returned error:', res.status);
       }
     } catch (error) {
       console.error('Error scheduling meeting:', error);

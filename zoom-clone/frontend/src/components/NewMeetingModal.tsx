@@ -1,3 +1,5 @@
+'use client';
+
 interface NewMeetingModalProps {
   onClose: () => void;
   onConfirm: () => void;

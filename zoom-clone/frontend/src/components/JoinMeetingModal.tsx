@@ -96,7 +96,10 @@ export default function JoinMeetingModal({ onClose, onJoin }: JoinMeetingModalPr
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => {
+                  console.log('Cancel button clicked');
+                  onClose();
+                }}
                 className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
                 disabled={isValidating}
               >

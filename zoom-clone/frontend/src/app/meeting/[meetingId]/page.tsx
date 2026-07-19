@@ -32,6 +32,37 @@ export default function MeetingRoom() {
   const API_BASE = 'http://localhost:8000/api';
   const DEFAULT_USER_ID = 1;
 
+  // WebRTC integration
+  const { isConnected: webrtcConnected, setLocalStream: setWebRTCStream, disconnect: disconnectWebRTC } = useWebRTC({
+    meetingId,
+    userId: currentUser?.id?.toString() || '',
+    onRemoteStream: (userId, stream) => {
+      console.log(`Received remote stream from user ${userId}`, stream);
+      setRemoteStreams(prev => new Map(prev.set(userId, stream)));
+    },
+    onUserLeft: (userId) => {
+      console.log(`User ${userId} left`);
+      setRemoteStreams(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(userId);
+        return newMap;
+      });
+    }
+  });
+
+  // Debug currentUser changes
+  useEffect(() => {
+    console.log('currentUser changed:', currentUser);
+    console.log('userId for WebRTC:', currentUser?.id?.toString() || 'not set');
+  }, [currentUser]);
+
+  // Update WebRTC with local stream when available
+  useEffect(() => {
+    if (localStream && currentUser) {
+      setWebRTCStream(localStream);
+    }
+  }, [localStream, currentUser, setWebRTCStream]);
+
   useEffect(() => {
     validateMeeting();
   }, [meetingId]);
@@ -105,7 +136,7 @@ export default function MeetingRoom() {
           setIsHost(true);
         }
         
-        startLocalVideo();
+        await startLocalVideo();
         fetchParticipants();
         startPolling();
       } else {
@@ -150,8 +181,10 @@ export default function MeetingRoom() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
+      return stream;
     } catch (error) {
       console.error('Error accessing media devices:', error);
+      return null;
     }
   };
 
@@ -207,6 +240,7 @@ export default function MeetingRoom() {
 
   const leaveMeeting = async () => {
     stopPolling();
+    disconnectWebRTC();
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
     }
@@ -400,19 +434,46 @@ export default function MeetingRoom() {
             )}
           </div>
 
-          {/* Participant Videos (Placeholder) */}
-          {participants.map((participant, index) => (
-            <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
-                <div className="w-20 h-20 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold">
-                  {participant.user?.display_name?.charAt(0) || 'U'}
+          {/* Participant Videos with WebRTC */}
+          {participants.map((participant) => {
+            const participantUserId = participant.user_id?.toString() || participant.id.toString();
+            const remoteStream = remoteStreams.get(participantUserId);
+            console.log(`Rendering participant ${participant.id}, user_id: ${participantUserId}, has stream: ${!!remoteStream}`);
+            return (
+              <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
+                {remoteStream ? (
+                  <video
+                    ref={(el) => {
+                      if (el) {
+                        console.log(`Setting video element for participant ${participantUserId}`);
+                        remoteVideoRefs.current.set(participant.id.toString(), el);
+                        el.srcObject = remoteStream;
+                        el.autoplay = true;
+                        el.playsInline = true;
+                      }
+                    }}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
+                    <div className="w-20 h-20 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold">
+                      {participant.user?.display_name?.charAt(0) || 'U'}
+                    </div>
+                  </div>
+                )}
+                <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                  {participant.user?.display_name || 'Participant'}
                 </div>
+                {!remoteStream && (
+                  <div className="absolute top-2 right-2 bg-yellow-600 rounded-full p-1">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                  </div>
+                )}
               </div>
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                {participant.user?.display_name || 'Participant'}
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Add more placeholder participants if needed */}
           {participants.length === 0 && (

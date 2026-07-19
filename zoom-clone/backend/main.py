@@ -27,7 +27,7 @@ app = FastAPI(title="Zoom Clone API")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -150,6 +150,8 @@ def get_meeting_participants(meeting_id: str, db: Session = Depends(get_db)):
 @app.post("/api/meetings/join")
 def join_meeting(request: JoinMeetingRequest, db: Session = Depends(get_db)):
     """Join a meeting"""
+    print(f"Join meeting request: meeting_id={request.meeting_id}, display_name={request.display_name}")
+    
     db_meeting = db.query(Meeting).filter(Meeting.meeting_id == request.meeting_id).first()
     if not db_meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
@@ -162,6 +164,7 @@ def join_meeting(request: JoinMeetingRequest, db: Session = Depends(get_db)):
         db_user = db.query(User).filter(User.id == db_meeting.host_id).first()
         if not db_user:
             raise HTTPException(status_code=404, detail="Host user not found")
+        print(f"Using host user: {db_user.id} - {db_user.display_name}")
     else:
         # Create or get user
         db_user = db.query(User).filter(User.display_name == request.display_name).first()
@@ -174,6 +177,9 @@ def join_meeting(request: JoinMeetingRequest, db: Session = Depends(get_db)):
             db.add(db_user)
             db.commit()
             db.refresh(db_user)
+            print(f"Created new user: {db_user.id} - {db_user.display_name}")
+        else:
+            print(f"Using existing user: {db_user.id} - {db_user.display_name}")
     
     # Check if user already joined
     existing_participant = db.query(Participant).filter(
@@ -182,7 +188,13 @@ def join_meeting(request: JoinMeetingRequest, db: Session = Depends(get_db)):
     ).first()
     
     if existing_participant:
-        return {"message": "Already joined", "meeting": db_meeting, "user": db_user}
+        response_data = {
+            "message": "Already joined",
+            "meeting": MeetingSchema.model_validate(db_meeting),
+            "user": UserSchema.model_validate(db_user)
+        }
+        print(f"Returning response: {response_data}")
+        return response_data
     
     # Add participant
     participant = Participant(
@@ -192,7 +204,13 @@ def join_meeting(request: JoinMeetingRequest, db: Session = Depends(get_db)):
     db.add(participant)
     db.commit()
     
-    return {"message": "Successfully joined", "meeting": db_meeting, "user": db_user}
+    response_data = {
+        "message": "Successfully joined",
+        "meeting": MeetingSchema.model_validate(db_meeting),
+        "user": UserSchema.model_validate(db_user)
+    }
+    print(f"Returning response: {response_data}")
+    return response_data
 
 @app.post("/api/meetings/{meeting_id}/end")
 def end_meeting(meeting_id: str, db: Session = Depends(get_db)):

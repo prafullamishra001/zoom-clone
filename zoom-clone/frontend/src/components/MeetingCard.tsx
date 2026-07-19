@@ -1,3 +1,5 @@
+'use client';
+
 interface Meeting {
   id: number;
   meeting_id: string;
@@ -26,6 +28,7 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
   };
 
   const copyMeetingLink = () => {
+    console.log('Copy link button clicked for meeting:', meeting.meeting_id);
     const link = `${window.location.origin}/meeting/${meeting.meeting_id}`;
     navigator.clipboard.writeText(link);
     alert('Meeting link copied to clipboard!');
@@ -76,7 +79,10 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
 
       <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
         <button
-          onClick={() => window.location.href = `/meeting/${meeting.meeting_id}`}
+          onClick={() => {
+            console.log('Join button clicked for meeting:', meeting.meeting_id);
+            window.location.href = `/meeting/${meeting.meeting_id}`;
+          }}
           className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
         >
           Join

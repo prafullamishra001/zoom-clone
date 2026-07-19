@@ -24,12 +24,43 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
     ]
   };
 
+  const hasRecreatedConnectionsRef = useRef(false);
+
   const setLocalStream = (stream: MediaStream) => {
+    // Only set if stream is different to prevent infinite loop
+    if (localStreamRef.current === stream) {
+      console.log('Stream already set, skipping recreation');
+      return;
+    }
+    
     localStreamRef.current = stream;
+    
+    // Only recreate connections once
+    if (hasRecreatedConnectionsRef.current) {
+      console.log('Connections already recreated, skipping');
+      return;
+    }
+    
+    hasRecreatedConnectionsRef.current = true;
+    
+    // Recreate peer connections with the new stream
+    // This ensures ICE gathering starts properly with tracks
+    peerConnectionsRef.current.forEach((pc, remoteUserId) => {
+      console.log(`Recreating peer connection with ${remoteUserId} to add tracks and restart ICE gathering`);
+      closePeerConnection(remoteUserId);
+      createPeerConnection(remoteUserId);
+      initiateOffer(remoteUserId);
+    });
   };
 
   const connectWebSocket = () => {
+    if (!userId) {
+      console.log('Cannot connect WebSocket: userId is missing');
+      return null;
+    }
+    
     const wsUrl = `ws://localhost:8000/ws/signaling/${meetingId}/${userId}`;
+    console.log('Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
@@ -50,7 +81,10 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
           newParticipants.forEach((participantId: string) => {
             if (!participants.has(participantId)) {
               createPeerConnection(participantId);
-              initiateOffer(participantId);
+              // Only initiate offer if we're the new user (participants list is empty initially)
+              if (participants.size === 0) {
+                initiateOffer(participantId);
+              }
             }
           });
           setParticipants(new Set(data.participants));
@@ -58,8 +92,11 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
           
         case 'user_joined':
           if (data.user_id !== userId) {
+            console.log(`User ${data.user_id} joined, creating peer connection`);
             setParticipants(prev => new Set([...prev, data.user_id]));
             createPeerConnection(data.user_id);
+            // Only the new user initiates offers, existing users wait for offers
+            // Don't initiate offer here - wait for the new user to initiate
           }
           break;
           
@@ -84,6 +121,7 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
           break;
           
         case 'ice_candidate':
+          console.log(`Received ICE candidate from ${data.sender_user_id}`);
           await handleIceCandidate(data.candidate, data.sender_user_id);
           break;
       }
@@ -102,19 +140,24 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
   };
 
   const createPeerConnection = (remoteUserId: string): RTCPeerConnection => {
+    console.log(`Creating peer connection with ${remoteUserId}`);
     const pc = new RTCPeerConnection(rtcConfig);
     
     peerConnectionsRef.current.set(remoteUserId, pc);
     
     // Add local stream tracks to peer connection
     if (localStreamRef.current) {
+      console.log('Adding local tracks to peer connection');
       localStreamRef.current.getTracks().forEach(track => {
         pc.addTrack(track, localStreamRef.current!);
       });
+    } else {
+      console.log('No local stream available yet - ICE gathering will start when stream is added');
     }
     
     // Handle remote stream
     pc.ontrack = (event) => {
+      console.log(`Received remote track from ${remoteUserId}`);
       if (event.streams && event.streams[0]) {
         onRemoteStream(remoteUserId, event.streams[0]);
       }
@@ -122,13 +165,24 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
     
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
+      console.log(`ICE candidate generated for ${remoteUserId}:`, event.candidate ? 'candidate present' : 'null (gathering complete)');
       if (event.candidate && websocketRef.current) {
+        console.log(`Sending ICE candidate to ${remoteUserId}`);
         websocketRef.current.send(JSON.stringify({
           type: 'ice_candidate',
           candidate: event.candidate,
-          target_user_id: remoteUserId
+          target_user_id: remoteUserId,
+          sender_user_id: userId
         }));
       }
+    };
+    
+    pc.onicegatheringstatechange = () => {
+      console.log(`ICE gathering state with ${remoteUserId}:`, pc.iceGatheringState);
+    };
+    
+    pc.oniceconnectionstatechange = () => {
+      console.log(`ICE connection state with ${remoteUserId}:`, pc.iceConnectionState);
     };
     
     pc.onconnectionstatechange = () => {
@@ -142,12 +196,17 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
   };
 
   const initiateOffer = async (remoteUserId: string) => {
+    console.log(`Initiating offer to ${remoteUserId}`);
     const pc = peerConnectionsRef.current.get(remoteUserId);
-    if (!pc) return;
+    if (!pc) {
+      console.log(`No peer connection found for ${remoteUserId}`);
+      return;
+    }
     
     try {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      console.log(`Local description set for offer to ${remoteUserId}`);
       
       if (websocketRef.current) {
         websocketRef.current.send(JSON.stringify({
@@ -155,20 +214,47 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
           offer: offer,
           target_user_id: remoteUserId
         }));
+        console.log(`Offer sent to ${remoteUserId}`);
       }
     } catch (error) {
-      console.error('Error creating offer:', error);
+      console.error(`Error creating offer to ${remoteUserId}:`, error);
     }
   };
 
   const handleOffer = async (offer: RTCSessionDescriptionInit, senderUserId: string) => {
+    console.log(`Handling offer from ${senderUserId}`);
     const pc = peerConnectionsRef.current.get(senderUserId);
-    if (!pc) return;
+    if (!pc) {
+      console.log(`No peer connection found for ${senderUserId}, creating one`);
+      createPeerConnection(senderUserId);
+      const newPc = peerConnectionsRef.current.get(senderUserId);
+      if (!newPc) return;
+      
+      try {
+        await newPc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await newPc.createAnswer();
+        await newPc.setLocalDescription(answer);
+        console.log(`Answer created for ${senderUserId}`);
+        
+        if (websocketRef.current) {
+          websocketRef.current.send(JSON.stringify({
+            type: 'answer',
+            answer: answer,
+            target_user_id: senderUserId
+          }));
+          console.log(`Answer sent to ${senderUserId}`);
+        }
+      } catch (error) {
+        console.error(`Error handling offer from ${senderUserId}:`, error);
+      }
+      return;
+    }
     
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      console.log(`Answer created for ${senderUserId}`);
       
       if (websocketRef.current) {
         websocketRef.current.send(JSON.stringify({
@@ -176,31 +262,42 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
           answer: answer,
           target_user_id: senderUserId
         }));
+        console.log(`Answer sent to ${senderUserId}`);
       }
     } catch (error) {
-      console.error('Error handling offer:', error);
+      console.error(`Error handling offer from ${senderUserId}:`, error);
     }
   };
 
   const handleAnswer = async (answer: RTCSessionDescriptionInit, senderUserId: string) => {
+    console.log(`Handling answer from ${senderUserId}`);
     const pc = peerConnectionsRef.current.get(senderUserId);
-    if (!pc) return;
+    if (!pc) {
+      console.log(`No peer connection found for ${senderUserId}`);
+      return;
+    }
     
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      console.log(`Remote description set for answer from ${senderUserId}`);
     } catch (error) {
-      console.error('Error handling answer:', error);
+      console.error(`Error handling answer from ${senderUserId}:`, error);
     }
   };
 
   const handleIceCandidate = async (candidate: RTCIceCandidateInit, senderUserId: string) => {
+    console.log(`Handling ICE candidate from ${senderUserId}`);
     const pc = peerConnectionsRef.current.get(senderUserId);
-    if (!pc) return;
+    if (!pc) {
+      console.log(`No peer connection found for ${senderUserId}`);
+      return;
+    }
     
     try {
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      console.log(`ICE candidate added for ${senderUserId}`);
     } catch (error) {
-      console.error('Error adding ICE candidate:', error);
+      console.error(`Error handling ICE candidate from ${senderUserId}:`, error);
     }
   };
 
@@ -228,6 +325,12 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
   };
 
   useEffect(() => {
+    if (!userId) {
+      console.log('WebSocket not connecting: userId not available yet');
+      return;
+    }
+    
+    console.log('WebSocket connecting with userId:', userId);
     const ws = connectWebSocket();
     
     return () => {
