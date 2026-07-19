@@ -72,7 +72,7 @@ export default function MeetingRoom() {
 
   const validateMeeting = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}`);
+      const res = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}`);
       if (res.ok) {
         const meetingData = await res.json();
         setMeeting(meetingData);
@@ -96,7 +96,7 @@ export default function MeetingRoom() {
 
   const autoJoinAsHost = async (meetingData: any) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/join`, {
+      const res = await fetch(`${API_BASE_URL}/api/meetings/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meeting_id: meetingId, display_name: hostNameFromUrl })
@@ -123,7 +123,7 @@ export default function MeetingRoom() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/join`, {
+      const res = await fetch(`${API_BASE_URL}/api/meetings/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meeting_id: meetingId, display_name: displayName.trim() })
@@ -193,7 +193,7 @@ export default function MeetingRoom() {
 
   const fetchParticipants = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants`);
+      const res = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}/participants`);
       if (res.ok) {
         const data = await res.json();
         setParticipants(data);
@@ -252,7 +252,7 @@ export default function MeetingRoom() {
 
   const handleMuteAll = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/mute-all`, {
+      const res = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}/mute-all`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -266,7 +266,7 @@ export default function MeetingRoom() {
 
   const handleMuteParticipant = async (participantId: number) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants/${participantId}/mute`, {
+      const res = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}/participants/${participantId}/mute`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -279,7 +279,7 @@ export default function MeetingRoom() {
 
   const handleUnmuteParticipant = async (participantId: number) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants/${participantId}/unmute`, {
+      const res = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}/participants/${participantId}/unmute`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -296,7 +296,7 @@ export default function MeetingRoom() {
     }
     
     try {
-      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants/${participantId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}/participants/${participantId}`, {
         method: 'DELETE'
       });
       if (res.ok) {

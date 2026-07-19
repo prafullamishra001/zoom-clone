@@ -1,9 +1,11 @@
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Derive WebSocket URL from API URL
 const getWebSocketUrl = (apiUrl: string): string => {
-  return apiUrl.replace(/^https?:\/\//, (match) => match === 'https://' ? 'wss://' : 'ws://').replace(/\/api$/, '/ws');
+  const protocol = apiUrl.startsWith('https://') ? 'wss://' : 'ws://';
+  const host = apiUrl.replace(/^https?:\/\//, '');
+  return `${protocol}${host}/ws`;
 };
 
 export const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || getWebSocketUrl(API_BASE_URL);
