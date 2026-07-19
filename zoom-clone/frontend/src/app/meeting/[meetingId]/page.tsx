@@ -8,6 +8,7 @@ import {
   Users, Copy, LogOut, MessageSquare, Settings, 
   Phone, PhoneOff, AlertCircle, UserPlus 
 } from 'lucide-react';
+import { API_BASE_URL, DEFAULT_USER_ID } from '@/lib/api/config';
 
 export default function MeetingRoom() {
   const params = useParams();
@@ -33,9 +34,6 @@ export default function MeetingRoom() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
-
-  const API_BASE = 'http://localhost:8000/api';
-  const DEFAULT_USER_ID = 1;
 
   // WebRTC integration
   const { isConnected: webrtcConnected, setLocalStream: setWebRTCStream, disconnect: disconnectWebRTC } = useWebRTC({
@@ -74,7 +72,7 @@ export default function MeetingRoom() {
 
   const validateMeeting = async () => {
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}`);
+      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}`);
       if (res.ok) {
         const meetingData = await res.json();
         setMeeting(meetingData);
@@ -98,7 +96,7 @@ export default function MeetingRoom() {
 
   const autoJoinAsHost = async (meetingData: any) => {
     try {
-      const res = await fetch(`${API_BASE}/meetings/join`, {
+      const res = await fetch(`${API_BASE_URL}/meetings/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meeting_id: meetingId, display_name: hostNameFromUrl })
@@ -125,7 +123,7 @@ export default function MeetingRoom() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/meetings/join`, {
+      const res = await fetch(`${API_BASE_URL}/meetings/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meeting_id: meetingId, display_name: displayName.trim() })
@@ -195,7 +193,7 @@ export default function MeetingRoom() {
 
   const fetchParticipants = async () => {
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}/participants`);
+      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants`);
       if (res.ok) {
         const data = await res.json();
         setParticipants(data);
@@ -254,7 +252,7 @@ export default function MeetingRoom() {
 
   const handleMuteAll = async () => {
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}/mute-all`, {
+      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/mute-all`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -268,7 +266,7 @@ export default function MeetingRoom() {
 
   const handleMuteParticipant = async (participantId: number) => {
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}/participants/${participantId}/mute`, {
+      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants/${participantId}/mute`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -281,7 +279,7 @@ export default function MeetingRoom() {
 
   const handleUnmuteParticipant = async (participantId: number) => {
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}/participants/${participantId}/unmute`, {
+      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants/${participantId}/unmute`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -298,7 +296,7 @@ export default function MeetingRoom() {
     }
     
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}/participants/${participantId}`, {
+      const res = await fetch(`${API_BASE_URL}/meetings/${meetingId}/participants/${participantId}`, {
         method: 'DELETE'
       });
       if (res.ok) {

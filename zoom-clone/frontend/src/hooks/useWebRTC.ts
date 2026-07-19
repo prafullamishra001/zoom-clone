@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { WS_BASE_URL } from '@/lib/api/config';
 
 interface WebRTCConfig {
   meetingId: string;
@@ -59,7 +60,7 @@ export function useWebRTC({ meetingId, userId, onRemoteStream, onUserLeft }: Web
       return null;
     }
     
-    const wsUrl = `ws://localhost:8000/ws/signaling/${meetingId}/${userId}`;
+    const wsUrl = `${WS_BASE_URL}/signaling/${meetingId}/${userId}`;
     console.log('Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
     
