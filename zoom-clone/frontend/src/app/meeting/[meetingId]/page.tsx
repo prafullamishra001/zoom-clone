@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useWebRTC } from '@/hooks/useWebRTC';
+import { 
+  Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, 
+  Users, Copy, LogOut, MessageSquare, Settings, 
+  Phone, PhoneOff, AlertCircle, UserPlus 
+} from 'lucide-react';
 
 export default function MeetingRoom() {
   const params = useParams();
@@ -314,7 +319,10 @@ export default function MeetingRoom() {
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-xl">Loading meeting...</div>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <div className="text-white text-xl">Loading meeting...</div>
+        </div>
       </div>
     );
   }
@@ -322,12 +330,15 @@ export default function MeetingRoom() {
   if (!meetingExists) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-900">
-        <div className="bg-gray-800 rounded-lg p-8 text-center max-w-md">
+        <div className="bg-gray-800 rounded-2xl p-8 text-center max-w-md mx-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-2xl mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
           <h1 className="text-white text-2xl font-bold mb-4">Meeting Not Found</h1>
           <p className="text-gray-400 mb-6">The meeting with ID {meetingId} does not exist or has ended.</p>
           <button
             onClick={() => router.push('/')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-colors shadow-md hover:shadow-lg"
           >
             Return to Home
           </button>
@@ -339,9 +350,14 @@ export default function MeetingRoom() {
   if (!isJoined) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-900">
-        <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4">
-          <h1 className="text-white text-2xl font-bold mb-2">Join Meeting</h1>
-          <p className="text-gray-400 mb-6">Meeting ID: {meetingId}</p>
+        <div className="bg-gray-800 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-4">
+              <Users className="w-8 h-8 text-blue-600" />
+            </div>
+            <h1 className="text-white text-2xl font-bold mb-2">Join Meeting</h1>
+            <p className="text-gray-400">Meeting ID: {meetingId}</p>
+          </div>
           
           <div className="mb-6">
             <label htmlFor="displayName" className="block text-white text-sm font-medium mb-2">
@@ -353,21 +369,22 @@ export default function MeetingRoom() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Enter your name"
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
             />
           </div>
 
           <button
             onClick={handleJoin}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
           >
+            <Phone className="w-5 h-5" />
             Join Meeting
           </button>
 
           <button
             onClick={() => router.push('/')}
-            className="w-full mt-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="w-full mt-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
           >
             Cancel
           </button>
@@ -381,22 +398,27 @@ export default function MeetingRoom() {
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-white font-semibold">Meeting: {meetingId}</h1>
-          <span className="text-gray-400 text-sm">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-400" />
+            <h1 className="text-white font-semibold">Meeting: {meetingId}</h1>
+          </div>
+          <span className="bg-gray-700 text-gray-300 px-3 py-1 rounded-full text-sm">
             {participants.length + 1} participant{participants.length + 1 !== 1 ? 's' : ''}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={copyInviteLink}
-            className="text-gray-300 hover:text-white px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            className="text-gray-300 hover:text-white px-3 py-2 rounded-xl hover:bg-gray-700 transition-colors flex items-center gap-2"
           >
+            <Copy className="w-4 h-4" />
             Copy Invite Link
           </button>
           <button
             onClick={leaveMeeting}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
           >
+            <LogOut className="w-4 h-4" />
             Leave
           </button>
         </div>
@@ -407,7 +429,7 @@ export default function MeetingRoom() {
         {/* Video Grid */}
         <div className="flex-1 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Local Video */}
-          <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
+          <div className="relative bg-gray-800 rounded-2xl overflow-hidden aspect-video shadow-lg">
             <video
               ref={videoRef}
               autoPlay
@@ -417,19 +439,17 @@ export default function MeetingRoom() {
             />
             {!isVideoOn && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
-                <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-                  You
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                  {currentUser?.display_name?.charAt(0) || 'Y'}
                 </div>
               </div>
             )}
-            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+            <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm">
               You
             </div>
             {isMuted && (
-              <div className="absolute bottom-2 right-2 bg-red-600 rounded-full p-1">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>
-                </svg>
+              <div className="absolute bottom-3 right-3 bg-red-600 rounded-full p-2 shadow-lg">
+                <MicOff className="w-4 h-4 text-white" />
               </div>
             )}
           </div>
@@ -440,7 +460,7 @@ export default function MeetingRoom() {
             const remoteStream = remoteStreams.get(participantUserId);
             console.log(`Rendering participant ${participant.id}, user_id: ${participantUserId}, has stream: ${!!remoteStream}`);
             return (
-              <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
+              <div key={participant.id} className="relative bg-gray-800 rounded-2xl overflow-hidden aspect-video shadow-lg">
                 {remoteStream ? (
                   <video
                     ref={(el) => {
@@ -456,19 +476,17 @@ export default function MeetingRoom() {
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
-                    <div className="w-20 h-20 rounded-full bg-green-600 flex items-center justify-center text-white text-2xl font-bold">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
                       {participant.user?.display_name?.charAt(0) || 'U'}
                     </div>
                   </div>
                 )}
-                <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm">
                   {participant.user?.display_name || 'Participant'}
                 </div>
                 {!remoteStream && (
-                  <div className="absolute top-2 right-2 bg-yellow-600 rounded-full p-1">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
+                  <div className="absolute top-3 right-3 bg-yellow-600 rounded-full p-2 shadow-lg">
+                    <AlertCircle className="w-4 h-4 text-white" />
                   </div>
                 )}
               </div>
@@ -478,12 +496,10 @@ export default function MeetingRoom() {
           {/* Add more placeholder participants if needed */}
           {participants.length === 0 && (
             <>
-              <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
+              <div className="relative bg-gray-800 rounded-2xl overflow-hidden aspect-video shadow-lg">
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
                   <div className="text-gray-400 text-center">
-                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
+                    <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">Waiting for others to join...</p>
                   </div>
                 </div>
@@ -495,36 +511,38 @@ export default function MeetingRoom() {
         {/* Sidebar */}
         <div className="w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white font-semibold">Participants ({participants.length + 1})</h2>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-400" />
+              <h2 className="text-white font-semibold">Participants ({participants.length + 1})</h2>
+            </div>
             {isHost && (
               <button
                 onClick={handleMuteAll}
-                className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
+                className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
+                <MicOff className="w-3 h-3" />
                 Mute All
               </button>
             )}
           </div>
           
           <div className="space-y-2">
-            <div className="flex items-center gap-3 p-2 bg-gray-700 rounded-lg">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                You
+            <div className="flex items-center gap-3 p-3 bg-gray-700 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-semibold shadow-md">
+                {currentUser?.display_name?.charAt(0) || 'Y'}
               </div>
               <div className="flex-1">
                 <p className="text-white text-sm font-medium">{currentUser?.display_name || 'You'}</p>
                 <p className="text-gray-400 text-xs">{isHost ? 'Host' : 'Participant'}</p>
               </div>
               {isMuted && (
-                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>
-                </svg>
+                <MicOff className="w-4 h-4 text-red-500" />
               )}
             </div>
             
             {participants.map((participant) => (
-              <div key={participant.id} className="flex items-center gap-3 p-2 bg-gray-700 rounded-lg">
-                <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold">
+              <div key={participant.id} className="flex items-center gap-3 p-3 bg-gray-700 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center text-white font-semibold shadow-md">
                   {participant.user?.display_name?.charAt(0) || 'U'}
                 </div>
                 <div className="flex-1">
@@ -539,57 +557,52 @@ export default function MeetingRoom() {
                     {participant.is_muted ? (
                       <button
                         onClick={() => handleUnmuteParticipant(participant.id)}
-                        className="p-1 hover:bg-gray-600 rounded transition-colors"
+                        className="p-2 hover:bg-gray-600 rounded-lg transition-colors"
                         title="Unmute"
                       >
-                        <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                        </svg>
+                        <Mic className="w-4 h-4 text-green-500" />
                       </button>
                     ) : (
                       <button
                         onClick={() => handleMuteParticipant(participant.id)}
-                        className="p-1 hover:bg-gray-600 rounded transition-colors"
+                        className="p-2 hover:bg-gray-600 rounded-lg transition-colors"
                         title="Mute"
                       >
-                        <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>
-                        </svg>
+                        <MicOff className="w-4 h-4 text-gray-400" />
                       </button>
                     )}
                     <button
                       onClick={() => handleRemoveParticipant(participant.id)}
-                      className="p-1 hover:bg-gray-600 rounded transition-colors"
+                      className="p-2 hover:bg-gray-600 rounded-lg transition-colors"
                       title="Remove"
                     >
-                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                      </svg>
+                      <LogOut className="w-4 h-4 text-red-500" />
                     </button>
                   </div>
                 )}
                 
                 {!isHost && participant.is_muted && (
-                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>
-                  </svg>
+                  <MicOff className="w-4 h-4 text-red-500" />
                 )}
               </div>
             ))}
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-700">
-            <h3 className="text-white font-semibold mb-3">Meeting Info</h3>
-            <div className="bg-gray-700 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <Copy className="w-4 h-4 text-blue-400" />
+              <h3 className="text-white font-semibold">Meeting Info</h3>
+            </div>
+            <div className="bg-gray-700 rounded-xl p-4 space-y-3">
               <div>
-                <p className="text-gray-400 text-xs">Meeting ID</p>
-                <p className="text-white text-sm font-mono">{meetingId}</p>
+                <p className="text-gray-400 text-xs mb-1">Meeting ID</p>
+                <p className="text-white text-sm font-mono bg-gray-800 px-3 py-2 rounded-lg">{meetingId}</p>
               </div>
               <button
                 onClick={copyInviteLink}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded-lg transition-colors"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
               >
+                <Copy className="w-4 h-4" />
                 Copy Invite Link
               </button>
             </div>
@@ -598,79 +611,65 @@ export default function MeetingRoom() {
       </div>
 
       {/* Control Bar */}
-      <div className="bg-gray-800 border-t border-gray-700 px-4 py-3">
-        <div className="flex items-center justify-center gap-2">
+      <div className="bg-gray-800 border-t border-gray-700 px-4 py-4">
+        <div className="flex items-center justify-center gap-3">
           <button
             onClick={toggleMute}
-            className={`p-4 rounded-full transition-colors ${
-              isMuted ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'
+            className={`p-4 rounded-full transition-all duration-200 ${
+              isMuted ? 'bg-red-600 hover:bg-red-700 shadow-lg' : 'bg-gray-700 hover:bg-gray-600'
             }`}
+            title={isMuted ? 'Unmute' : 'Mute'}
           >
-            {isMuted ? (
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/>
-              </svg>
-            ) : (
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-              </svg>
-            )}
+            {isMuted ? <MicOff className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6 text-white" />}
           </button>
 
           <button
             onClick={toggleVideo}
-            className={`p-4 rounded-full transition-colors ${
-              !isVideoOn ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-700 hover:bg-gray-600'
+            className={`p-4 rounded-full transition-all duration-200 ${
+              !isVideoOn ? 'bg-red-600 hover:bg-red-700 shadow-lg' : 'bg-gray-700 hover:bg-gray-600'
             }`}
+            title={isVideoOn ? 'Turn off video' : 'Turn on video'}
           >
-            {isVideoOn ? (
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-              </svg>
-            ) : (
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"/>
-              </svg>
-            )}
+            {isVideoOn ? <Video className="w-6 h-6 text-white" /> : <VideoOff className="w-6 h-6 text-white" />}
           </button>
 
           <button
             onClick={toggleScreenShare}
-            className={`p-4 rounded-full transition-colors ${
-              isScreenSharing ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'
+            className={`p-4 rounded-full transition-all duration-200 ${
+              isScreenSharing ? 'bg-green-600 hover:bg-green-700 shadow-lg' : 'bg-gray-700 hover:bg-gray-600'
             }`}
+            title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
           >
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.11-.9-2-2-2H4c-1.11 0-2 .89-2 2v10c0 1.1.89 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
-            </svg>
+            {isScreenSharing ? <MonitorOff className="w-6 h-6 text-white" /> : <Monitor className="w-6 h-6 text-white" />}
           </button>
 
-          <button className="p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M7 24h2v-2H7v2zm4 0h2v-2h-2v2zm4 0h2v-2h-2v2zM16.5 3c-4.14 0-7.5 3.36-7.5 7.5 0 4.14 3.36 7.5 7.5 7.5S24 14.64 24 10.5 20.64 3 16.5 3zm0 13c-3.03 0-5.5-2.47-5.5-5.5S13.47 5 16.5 5 22 7.47 22 10.5 19.53 16 16.5 16zM9 5c0-.55-.45-1-1-1H5c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h3c.55 0 1-.45 1-1V5zm-1 3H5V5h3v3z"/>
-            </svg>
+          <button 
+            className="p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
+            title="Participants"
+          >
+            <Users className="w-6 h-6 text-white" />
           </button>
 
-          <button className="p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
+          <button 
+            className="p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
+            title="Chat"
+          >
+            <MessageSquare className="w-6 h-6 text-white" />
           </button>
 
-          <button className="p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-            </svg>
+          <button 
+            className="p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-all duration-200"
+            title="Settings"
+          >
+            <Settings className="w-6 h-6 text-white" />
           </button>
 
           <button
             onClick={leaveMeeting}
-            className="p-4 rounded-full bg-red-600 hover:bg-red-700 transition-colors ml-4"
+            className="p-4 rounded-full bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-lg ml-4"
+            title="Leave meeting"
           >
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
-            </svg>
+            <PhoneOff className="w-6 h-6 text-white" />
           </button>
         </div>
       </div>

@@ -1,15 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { LogIn, X, AlertCircle, Hash, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LogIn, Hash, User, AlertCircle } from 'lucide-react';
 import { meetingsApi } from '@/lib/api';
+import Navbar from '@/components/Navbar';
 
-interface JoinMeetingModalProps {
-  onClose: () => void;
-  onJoin: (meetingId: string, displayName: string) => void;
-}
-
-export default function JoinMeetingModal({ onClose, onJoin }: JoinMeetingModalProps) {
+export default function JoinPage() {
+  const router = useRouter();
   const [meetingId, setMeetingId] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [isValidating, setIsValidating] = useState(false);
@@ -48,26 +46,29 @@ export default function JoinMeetingModal({ onClose, onJoin }: JoinMeetingModalPr
       return;
     }
 
-    onJoin(meetingId.trim(), displayName.trim());
+    try {
+      await meetingsApi.joinMeeting({ 
+        meeting_id: meetingId.trim(), 
+        display_name: displayName.trim() 
+      });
+      router.push(`/meeting/${meetingId.trim()}`);
+    } catch (error) {
+      setError('Failed to join meeting. Please try again.');
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 rounded-xl p-2">
-                <LogIn className="h-5 w-5 text-blue-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">Join Meeting</h2>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Navbar />
+      
+      <main className="max-w-md mx-auto px-4 py-16">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-2xl mb-4">
+              <LogIn className="w-8 h-8 text-blue-600" />
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Meeting</h1>
+            <p className="text-gray-600">Enter the meeting ID to join</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -115,26 +116,25 @@ export default function JoinMeetingModal({ onClose, onJoin }: JoinMeetingModalPr
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors"
-                disabled={isValidating}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isValidating}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isValidating ? 'Validating...' : 'Join Meeting'}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isValidating}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isValidating ? 'Validating...' : 'Join Meeting'}
+            </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => router.push('/')}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              ← Back to Home
+            </button>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
